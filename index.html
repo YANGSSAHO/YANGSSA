@@ -1,0 +1,1784 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow, noarchive">
+</head>
+<body>
+<title>배당 변화 알리미</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #eef1f5;
+    --surface: #ffffff;
+    --surface-2: #f6f8fa;
+    --surface-3: #eceff4;
+    --line: #dde3ea;
+    --line-strong: #c6cfda;
+    --text: #0f141b;
+    --text-2: #56606d;
+    --muted: #8a94a2;
+    --accent: #5548c8;
+    --accent-soft: #e9e7fa;
+    --up: #d1402f;       /* 확률 상승 = 돈이 몰림 */
+    --down: #2a78d6;     /* 확률 하락 */
+    --up-soft: #fbe9e6;
+    --down-soft: #e3eefb;
+    --warn: #b06c12;
+    --warn-soft: #fbf0dc;
+    --s1: #2a78d6;
+    --s2: #eb6834;
+    --s3: #1baf7a;
+    --s4: #eda100;
+    --s5: #e87ba4;
+    --shadow: 0 1px 2px rgba(15,20,27,.06), 0 6px 18px -10px rgba(15,20,27,.22);
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: "IBM Plex Sans KR", -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #10131a;
+      --surface: #191d26;
+      --surface-2: #1f2430;
+      --surface-3: #262c3a;
+      --line: #2c3342;
+      --line-strong: #3c4557;
+      --text: #eef1f6;
+      --text-2: #a4aebc;
+      --muted: #7b8595;
+      --accent: #9085e9;
+      --accent-soft: #272442;
+      --up: #e66a58;
+      --down: #5598e7;
+      --up-soft: #33211e;
+      --down-soft: #1a2738;
+      --warn: #d9a13f;
+      --warn-soft: #302718;
+      --s1: #3987e5;
+      --s2: #d95926;
+      --s3: #199e70;
+      --s4: #c98500;
+      --s5: #d55181;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #10131a;
+    --surface: #191d26;
+    --surface-2: #1f2430;
+    --surface-3: #262c3a;
+    --line: #2c3342;
+    --line-strong: #3c4557;
+    --text: #eef1f6;
+    --text-2: #a4aebc;
+    --muted: #7b8595;
+    --accent: #9085e9;
+    --accent-soft: #272442;
+    --up: #e66a58;
+    --down: #5598e7;
+    --up-soft: #33211e;
+    --down-soft: #1a2738;
+    --warn: #d9a13f;
+    --warn-soft: #302718;
+    --s1: #3987e5;
+    --s2: #d95926;
+    --s3: #199e70;
+    --s4: #c98500;
+    --s5: #d55181;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 0 16px; }
+  h1, h2, h3 { text-wrap: balance; margin: 0; font-weight: 600; letter-spacing: -.01em; }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  /* ---------- header ---------- */
+  header.top {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .brandrow { display: flex; align-items: center; gap: 12px; padding-block: 12px; flex-wrap: wrap; }
+  .mark {
+    width: 30px; height: 30px; border-radius: 8px; flex: none;
+    background: var(--accent); display: grid; place-items: center;
+  }
+  .mark svg { display: block; }
+  .brand h1 { font-size: 17px; line-height: 1.2; }
+  .brand p { margin: 1px 0 0; font-size: 11.5px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+  .spacer { flex: 1 1 auto; }
+  .badge {
+    font-size: 11px; font-weight: 600; letter-spacing: .03em;
+    padding: 4px 9px; border-radius: 999px;
+    background: var(--warn-soft); color: var(--warn); border: 1px solid color-mix(in srgb, var(--warn) 28%, transparent);
+  }
+  .tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    appearance: none; border: 0; background: none; cursor: pointer;
+    font-family: inherit; font-size: 13px; font-weight: 500; color: var(--text-2);
+    padding: 9px 13px 11px; border-bottom: 2px solid transparent; white-space: nowrap;
+  }
+  .tab:hover { color: var(--text); }
+  .tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+  .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 4px; }
+  .tab .cnt {
+    font-family: var(--mono); font-size: 10.5px; margin-left: 5px;
+    background: var(--surface-3); color: var(--text-2); padding: 1px 5px; border-radius: 5px;
+  }
+  .tab[aria-selected="true"] .cnt { background: var(--accent-soft); color: var(--accent); }
+
+  main { padding-block: 18px 56px; }
+
+  /* ---------- stat strip ---------- */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line);
+           border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-bottom: 18px; }
+  .stat { background: var(--surface); padding: 13px 15px; }
+  .stat dt { font-size: 11.5px; color: var(--muted); margin: 0 0 3px; letter-spacing: .01em; }
+  .stat dd { margin: 0; font-family: var(--mono); font-size: 22px; font-weight: 600; letter-spacing: -.02em; }
+  .stat dd small { font-size: 12px; font-weight: 500; color: var(--text-2); margin-left: 3px; }
+  .stat .sub { font-size: 11px; color: var(--muted); font-family: var(--sans); }
+
+  /* ---------- layout ---------- */
+  .split { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 16px; align-items: start; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); }
+  .panel > header {
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+    padding: 13px 16px; border-bottom: 1px solid var(--line);
+  }
+  .panel > header h2 { font-size: 14px; }
+  .panel > header .hint { font-size: 11.5px; color: var(--muted); }
+  .panel .body { padding: 16px; }
+
+  /* ---------- match list ---------- */
+  .mlist { max-height: 620px; overflow-y: auto; }
+  .mrow {
+    display: block; width: 100%; text-align: left; border: 0; background: none; cursor: pointer;
+    font-family: inherit; color: inherit; padding: 11px 16px; border-bottom: 1px solid var(--line);
+    border-left: 3px solid transparent;
+  }
+  .mrow:last-child { border-bottom: 0; }
+  .mrow:hover { background: var(--surface-2); }
+  .mrow[aria-current="true"] { background: var(--accent-soft); border-left-color: var(--accent); }
+  .mrow:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .mrow .lg { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .mrow .tm { font-size: 13px; font-weight: 500; margin-top: 1px; }
+  .mrow .meta { display: flex; align-items: center; gap: 7px; margin-top: 4px; font-size: 11px; color: var(--text-2); }
+  .pill {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600;
+    padding: 2px 7px; border-radius: 999px; letter-spacing: .01em; white-space: nowrap;
+  }
+  .pill.steam { background: var(--up-soft); color: var(--up); }
+  .pill.quiet { background: var(--surface-3); color: var(--muted); }
+  .pill.value { background: var(--down-soft); color: var(--down); }
+  .pill.win { background: #e3f3ec; color: #12795a; }
+  .pill.lose { background: var(--surface-3); color: var(--muted); }
+  :root[data-theme="dark"] .pill.win, :root:not([data-theme="light"]) .pill.win { }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pill.win { background: #12312a; color: #4fc79b; } }
+  :root[data-theme="dark"] .pill.win { background: #12312a; color: #4fc79b; }
+
+  /* ---------- odds table ---------- */
+  .tblwrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: right; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  thead th {
+    font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted);
+    font-weight: 600; border-bottom: 1px solid var(--line-strong); position: sticky; top: 0; background: var(--surface);
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr.sharp td { background: var(--surface-2); }
+  td.o { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .delta { font-family: var(--mono); font-size: 11.5px; }
+  .delta.u { color: var(--up); }
+  .delta.d { color: var(--down); }
+  .delta.n { color: var(--muted); }
+  .best { font-weight: 600; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; }
+  .evtag { font-family: var(--mono); font-size: 11px; padding: 1px 6px; border-radius: 5px; }
+  .evtag.pos { background: var(--down-soft); color: var(--down); font-weight: 600; }
+  .evtag.neg { color: var(--muted); }
+
+  /* ---------- chart ---------- */
+  .chartbox { position: relative; }
+  .chartbox svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 0 2px 10px; font-size: 12px; color: var(--text-2); }
+  .legend span.i { display: inline-flex; align-items: center; gap: 6px; }
+  .outsel { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    appearance: none; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 500;
+    padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line-strong);
+    background: var(--surface); color: var(--text-2);
+  }
+  .chip:hover { border-color: var(--accent); color: var(--text); }
+  .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tip {
+    position: absolute; pointer-events: none; z-index: 5; min-width: 150px;
+    background: var(--surface); border: 1px solid var(--line-strong); border-radius: 9px;
+    box-shadow: var(--shadow); padding: 9px 11px; font-size: 12px; opacity: 0; transition: opacity .1s;
+  }
+  .tip.on { opacity: 1; }
+  .tip .t { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+  .tip .r { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  .tip .r b { font-family: var(--mono); font-weight: 600; }
+
+  /* ---------- alerts ---------- */
+  .alerts { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+  .alert { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--up); border-radius: 10px; padding: 14px 16px; box-shadow: var(--shadow); }
+  .alert.mild { border-left-color: var(--warn); }
+  .alert h3 { font-size: 14px; }
+  .alert .lg { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .alert .move { display: flex; align-items: baseline; gap: 8px; margin: 9px 0 4px; }
+  .alert .move .big { font-family: var(--mono); font-size: 24px; font-weight: 600; color: var(--up); letter-spacing: -.02em; }
+  .alert.mild .move .big { color: var(--warn); }
+  .alert .desc { font-size: 12.5px; color: var(--text-2); }
+  .alert .foot { margin-top: 10px; padding-top: 9px; border-top: 1px dashed var(--line); font-size: 11.5px; color: var(--muted); display: flex; justify-content: space-between; gap: 10px; }
+  .alert button.go {
+    appearance: none; border: 0; background: none; padding: 0; cursor: pointer; font-family: inherit;
+    font-size: 11.5px; font-weight: 600; color: var(--accent);
+  }
+  .empty { padding: 40px 16px; text-align: center; color: var(--muted); font-size: 13px; }
+
+  /* ---------- filters ---------- */
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  select, input[type="search"], input[type="number"] {
+    font-family: inherit; font-size: 12.5px; color: var(--text); background: var(--surface);
+    border: 1px solid var(--line-strong); border-radius: 8px; padding: 6px 9px;
+  }
+  /* ---------- 동일배당 조회 ---------- */
+  .samerow { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 14px; }
+  .oddsin { display: flex; flex-direction: column; gap: 3px; }
+  .oddsin .cap { font-size: 11px; color: var(--muted); letter-spacing: .04em; }
+  .oddsin input {
+    width: 96px; font-family: var(--mono); font-size: 18px; font-weight: 600;
+    padding: 6px 8px; text-align: center; letter-spacing: -.02em;
+  }
+  .chk {
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+    font-size: 12.5px; color: var(--text-2); padding: 7px 10px;
+    border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface);
+  }
+  .chk input { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
+  .chk:hover { border-color: var(--accent); color: var(--text); }
+  .sumbar {
+    display: flex; gap: 1px; background: var(--line); border: 1px solid var(--line);
+    border-radius: 10px; overflow: hidden; margin-bottom: 14px;
+  }
+  .sumbar > div { background: var(--surface-2); padding: 11px 15px; flex: 1 1 0; min-width: 120px; }
+  .sumbar .k { font-size: 11.5px; color: var(--muted); }
+  .sumbar .v { font-family: var(--mono); font-size: 21px; font-weight: 600; letter-spacing: -.02em; }
+  td.hit { color: var(--up); font-weight: 600; }
+  td.miss { color: var(--text-2); }
+  .scorecell { font-family: var(--mono); font-weight: 600; letter-spacing: -.02em; }
+
+  /* ---------- 배당 조회기 ---------- */
+  .lookup-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .lookup-row .spacer { flex: 1 1 40px; }
+  #lk-odds {
+    width: 116px; font-family: var(--mono); font-size: 22px; font-weight: 600;
+    padding: 7px 10px; text-align: center; letter-spacing: -.02em;
+  }
+  .quick { display: flex; gap: 5px; flex-wrap: wrap; }
+  .quick .chip { font-family: var(--mono); padding: 5px 9px; font-size: 11.5px; }
+  .lk-cards {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1px;
+    background: var(--line); border: 1px solid var(--line); border-radius: 12px;
+    overflow: hidden; margin-top: 14px;
+  }
+  .lk-card { background: var(--surface-2); padding: 13px 15px; }
+  .lk-card .k { font-size: 11.5px; color: var(--muted); }
+  .lk-card .v {
+    font-family: var(--mono); font-size: 22px; font-weight: 600;
+    letter-spacing: -.02em; line-height: 1.3; margin: 1px 0;
+  }
+  select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .filters label { font-size: 11.5px; color: var(--muted); }
+
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+  .note { font-size: 12.5px; color: var(--text-2); }
+  .note code, code.k { font-family: var(--mono); font-size: 12px; background: var(--surface-3); padding: 1px 5px; border-radius: 4px; }
+
+  /* ---------- guide ---------- */
+  .guide { max-width: 760px; }
+  .guide h2 { font-size: 16px; margin-top: 4px; }
+  .guide h3 { font-size: 13.5px; margin-top: 18px; }
+  .guide p { color: var(--text-2); font-size: 13.5px; }
+  .steps { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 10px; counter-reset: s; }
+  .steps li {
+    display: grid; grid-template-columns: 26px 1fr; gap: 12px; align-items: start;
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+  }
+  .steps li::before {
+    counter-increment: s; content: counter(s);
+    font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--accent);
+    background: var(--accent-soft); border-radius: 7px; width: 26px; height: 26px; display: grid; place-items: center;
+  }
+  .steps b { display: block; font-size: 13.5px; font-weight: 600; margin-bottom: 2px; }
+  .steps span { font-size: 12.5px; color: var(--text-2); }
+  pre {
+    margin: 10px 0 0; overflow-x: auto; background: var(--surface-3); border: 1px solid var(--line);
+    border-radius: 9px; padding: 12px 14px; font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--text);
+  }
+  .formula { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 13px 15px; margin-top: 12px; }
+  .formula b { font-size: 13px; }
+  .formula p { margin: 4px 0 0; font-size: 12.5px; }
+  .formula .eq { font-family: var(--mono); font-size: 12.5px; margin-top: 6px; color: var(--text); }
+
+  /* ---------- 아카이브 좌우 분할 ---------- */
+  .split2 { display: grid; grid-template-columns: 330px minmax(0, 1fr); border-top: 1px solid var(--line); }
+  .split2 > .mlist { border-right: 1px solid var(--line); max-height: 620px; }
+  .split2 > div:last-child { padding: 16px; min-width: 0; }
+  .winner-col { background: color-mix(in srgb, var(--s3) 12%, transparent); }
+  .payout { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-top: 14px; }
+  .payout .big { font-family: var(--mono); font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
+  .resbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .resbar .who { font-size: 15px; font-weight: 600; }
+  .spread { font-family: var(--mono); font-size: 11.5px; color: var(--text-2); }
+
+  @media (max-width: 900px) {
+    .split { grid-template-columns: 1fr; }
+    .split2 { grid-template-columns: 1fr; }
+    .split2 > .mlist { border-right: 0; border-bottom: 1px solid var(--line); max-height: 300px; }
+    .mlist { max-height: 300px; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brandrow">
+      <div class="mark" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M2 13.5 L6 8.5 L9.5 10.5 L16 3.5" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="16" cy="3.5" r="2.1" fill="#fff"/>
+        </svg>
+      </div>
+      <div class="brand">
+        <h1>배당 변화 알리미</h1>
+        <p>해외 배팅 사이트 5곳 · 배당이 움직이면 알려줌</p>
+      </div>
+      <div class="spacer"></div>
+      <span class="badge" id="databadge"></span>
+    </div>
+    <div class="tabs" role="tablist" aria-label="화면 전환">
+      <button class="tab" role="tab" id="tab-live" aria-controls="p-live" aria-selected="true">지금 배당<span class="cnt" id="c-live">0</span></button>
+      <button class="tab" role="tab" id="tab-alert" aria-controls="p-alert" aria-selected="false">돈 쏠린 경기<span class="cnt" id="c-alert">0</span></button>
+      <button class="tab" role="tab" id="tab-arch" aria-controls="p-arch" aria-selected="false">지난 경기 기록<span class="cnt" id="c-arch">0</span></button>
+      <button class="tab" role="tab" id="tab-guide" aria-controls="p-guide" aria-selected="false">만드는 방법</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <dl class="stats" id="stats"></dl>
+
+  <!-- ============ 라이브 ============ -->
+  <section id="p-live" role="tabpanel" aria-labelledby="tab-live">
+    <div class="split">
+      <div class="panel">
+        <header>
+          <h2>보고 있는 경기</h2>
+          <span class="hint">경기 시작 빠른 순</span>
+        </header>
+        <div class="mlist" id="mlist"></div>
+      </div>
+
+      <div style="display:grid; gap:16px;">
+        <div class="panel">
+          <header>
+            <h2 id="detail-title">경기</h2>
+            <span class="hint" id="detail-sub"></span>
+          </header>
+          <div class="body" style="padding-bottom:10px;">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px;">
+              <span class="note" style="font-size:11.5px; color:var(--muted);">어느 쪽을 볼까</span>
+              <div class="outsel" id="outsel"></div>
+            </div>
+            <p class="note" style="margin:0 0 10px; font-size:12.5px;">
+              선이 <b>위로</b> 가면 이길 가능성을 높게 보기 시작했다는 뜻(배당은 내려감).
+              선이 <b>아래로</b> 가면 그 반대야.
+            </p>
+            <div class="legend" id="legend"></div>
+            <div class="chartbox" id="chartbox">
+              <svg id="chart" viewBox="0 0 720 300" preserveAspectRatio="none" role="img" aria-label="사이트별 이길 가능성 변화"></svg>
+              <div class="tip" id="tip"></div>
+            </div>
+            <p class="note" style="margin:2px 0 0; font-size:11.5px; color:var(--muted); text-align:center;">세로축: 그 팀이 이길 확률(%) · 가로축: 시간 · 그래프에 마우스를 올리면 그 시점 숫자가 나와</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <header>
+            <h2>사이트별 지금 배당</h2>
+            <span class="hint">같은 경기인데 사이트마다 배당이 다름</span>
+            <div class="spacer"></div>
+            <button class="chip" id="go-same">이 배당이었던 과거 경기 보기 →</button>
+          </header>
+          <div class="tblwrap">
+            <table id="otable"></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 알림 ============ -->
+  <section id="p-alert" role="tabpanel" aria-labelledby="tab-alert" hidden>
+    <div class="panel" style="margin-bottom:16px;">
+      <div class="body" style="padding-block:13px;">
+        <div class="filters">
+          <label for="alert-sens">얼마나 민감하게 잡을까</label>
+          <select id="alert-sens">
+            <option value="0.02">작은 변화도 다 보기</option>
+            <option value="0.025" selected>보통</option>
+            <option value="0.035">확실한 것만 보기</option>
+          </select>
+          <span class="note" id="alert-note"></span>
+        </div>
+      </div>
+    </div>
+    <div class="alerts" id="alerts"></div>
+  </section>
+
+  <!-- ============ 아카이브 ============ -->
+  <section id="p-arch" role="tabpanel" aria-labelledby="tab-arch" hidden>
+
+    <!-- 0. 같은 배당이었던 과거 경기 -->
+    <div class="panel" style="margin-bottom:16px;">
+      <header>
+        <h2>같은 배당이었던 과거 경기</h2>
+        <span class="hint">지금 경기의 배당을 그대로 넣으면, 과거에 똑같은 배당이 붙었던 경기들이 어떻게 끝났는지 다 보여줘</span>
+      </header>
+      <div class="body" style="padding-bottom:0;">
+        <div class="samerow">
+          <select id="sm-type">
+            <option value="2">승패 (야구·농구)</option>
+            <option value="3">승무패 (축구)</option>
+          </select>
+          <div class="oddsin">
+            <span class="cap">홈</span>
+            <input type="number" id="sm-h" value="1.30" step="0.01" min="1.01" max="30">
+          </div>
+          <div class="oddsin" id="sm-dwrap" hidden>
+            <span class="cap">무</span>
+            <input type="number" id="sm-d" value="3.40" step="0.01" min="1.01" max="30">
+          </div>
+          <div class="oddsin">
+            <span class="cap">원정</span>
+            <input type="number" id="sm-a" value="2.72" step="0.01" min="1.01" max="30">
+          </div>
+          <select id="sm-league"><option value="">종목/리그 전체</option></select>
+          <label class="chk" id="sm-nodraw-wrap" hidden>
+            <input type="checkbox" id="sm-nodraw" checked>
+            <span>무승부 배당은 빼고 찾기</span>
+          </label>
+          <select id="sm-tol">
+            <option value="0">배당 똑같은 것만</option>
+            <option value="0.06" selected>비슷한 것까지 (±0.06)</option>
+            <option value="0.15">넓게 보기 (±0.15)</option>
+          </select>
+        </div>
+        <p class="note" style="margin:-4px 0 14px; font-size:11.5px; color:var(--muted);">
+          여긴 해외 사이트 배당이라 국내 배당(예: 1.30 / 2.72)과 숫자가 달라.
+          국내는 수수료를 10% 넘게 떼서 양쪽 배당이 다 낮게 찍히거든. 국내 배당을 그대로 넣으면 안 나올 수 있어.
+        </p>
+        <div id="sm-summary"></div>
+      </div>
+      <div class="tblwrap" style="max-height:520px; overflow-y:auto;">
+        <table id="sm-table"></table>
+      </div>
+    </div>
+
+    <!-- 1. 배당 숫자로 찾기 -->
+    <div class="panel" style="margin-bottom:16px;">
+      <header>
+        <h2>배당 숫자로 과거 성적 찾기</h2>
+        <span class="hint">지금 보는 경기의 최종 배당을 넣으면, 같은 배당을 받았던 과거 팀들이 몇 % 이겼는지 나와</span>
+      </header>
+      <div class="body">
+        <div class="lookup-row">
+          <label for="lk-odds" style="font-size:13px; color:var(--text-2);">최종 배당</label>
+          <input type="number" id="lk-odds" value="1.77" step="0.01" min="1.01" max="30">
+          <div class="quick" id="lk-quick"></div>
+          <div class="spacer"></div>
+          <label for="lk-league" style="font-size:11.5px; color:var(--muted);">종목</label>
+          <select id="lk-league"><option value="">전체</option></select>
+        </div>
+        <div id="lk-result"></div>
+      </div>
+    </div>
+
+    <!-- 2. 배당 구간별 성적 -->
+    <div class="panel" style="margin-bottom:16px;">
+      <header>
+        <h2>배당 구간별 성적표</h2>
+        <span class="hint" id="bk-sub"></span>
+      </header>
+      <div class="body">
+        <p class="note" style="margin-top:0;">배당이 낮을수록(유력할수록) 실제로도 더 많이 이겨야 정상이야. <b>파란 막대(배당이 본 확률)</b>보다 <b>주황 막대(실제로 이긴 비율)</b>가 높은 구간이 있으면, 그 구간 배당이 후하게 매겨졌다는 뜻이야.</p>
+        <div class="legend">
+          <span class="i"><span class="dot" style="background:var(--s1)"></span>배당이 본 확률</span>
+          <span class="i"><span class="dot" style="background:var(--s2)"></span>실제로 이긴 비율</span>
+        </div>
+        <div class="chartbox">
+          <svg id="bucketchart" viewBox="0 0 720 300" role="img" aria-label="배당 구간별 실제 이긴 비율"></svg>
+        </div>
+        <div class="tblwrap" style="margin-top:8px;">
+          <table id="bktable"></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 팀별 성적 -->
+    <div class="panel" style="margin-bottom:16px;">
+      <header>
+        <h2>팀별 배당 성적</h2>
+        <span class="hint">이 팀은 배당이 얼마일 때 잘 이겼나</span>
+      </header>
+      <div class="body">
+        <div class="filters" style="margin-bottom:14px;">
+          <label for="t-team">팀 고르기</label>
+          <select id="t-team"></select>
+        </div>
+        <div id="teambox"></div>
+      </div>
+    </div>
+
+    <!-- 4. 경기 하나씩 찾아보기 -->
+    <div class="panel" style="margin-bottom:16px;">
+      <header>
+        <h2>경기별 최종 배당 기록</h2>
+        <span class="hint" id="arch-count"></span>
+      </header>
+      <div class="body" style="padding-bottom:12px;">
+        <div class="filters">
+          <input type="search" id="f-q" placeholder="팀 이름으로 찾기 (예: 두산)">
+          <select id="f-league"><option value="">전체 리그</option></select>
+          <select id="f-year"><option value="">전체 기간</option></select>
+          <select id="f-steam">
+            <option value="">전체 경기</option>
+            <option value="split">사이트끼리 의견 갈린 경기</option>
+            <option value="1">돈 쏠렸던 경기</option>
+            <option value="0">조용했던 경기</option>
+          </select>
+        </div>
+      </div>
+      <div class="split2">
+        <div class="mlist" id="alist"></div>
+        <div id="adetail"></div>
+      </div>
+    </div>
+
+    <!-- 5. 사이트별 성적표 -->
+    <div class="panel" style="margin-bottom:16px;">
+      <header>
+        <h2>사이트별 성적표</h2>
+        <span class="hint">어느 사이트 배당이 제일 잘 맞았나</span>
+      </header>
+      <div class="tblwrap">
+        <table id="booktable"></table>
+      </div>
+    </div>
+
+    <!-- 6. 처음 배당 vs 최종 배당 -->
+    <div class="panel">
+      <header><h2>처음 배당 vs 최종 배당</h2><span class="hint">왜 최종 배당만 쓰는지</span></header>
+      <div class="body" id="clvbox"></div>
+    </div>
+  </section>
+
+  <!-- ============ 가이드 ============ -->
+  <section id="p-guide" role="tabpanel" aria-labelledby="tab-guide" hidden>
+    <div class="panel">
+      <div class="body guide">
+        <h2>이 화면을 진짜 데이터로 돌리려면</h2>
+        <p>지금 보이는 숫자는 전부 연습용으로 만들어낸 가짜야. 틀은 실제와 똑같이 짜놨으니까, 아래 4가지만 채우면 진짜로 돌아가.</p>
+
+        <ol class="steps">
+          <li><b>배당을 받아올 곳부터 정하기</b><span>"The Odds API"라는 서비스에 가입하면 열쇠(키) 하나를 줘. 무료로 한 달에 500번까지 배당을 받아올 수 있고, 축구·야구·농구 대부분 나와. 사이트를 직접 뒤지는 것보다 훨씬 편해.</span></li>
+          <li><b>30분마다 배당을 받아서 저장하기</b><span>여기가 제일 중요해. <b>덮어쓰지 말고 계속 쌓아야 해.</b> "9월 21일 오후 3시, 맨시티 배당 1.80" 이런 줄을 하나씩 계속 추가하는 거야. 이렇게 쌓여야 "어? 아까보다 배당이 떨어졌네"를 알 수 있어. 저장은 엑셀 파일이나 작은 데이터베이스면 충분해.</span></li>
+          <li><b>경기 시작 직전 배당을 따로 저장하기</b><span>아카이브의 핵심이야. 경기 시작 10분 전쯤 사이트 5곳의 배당을 한 번 더 받아서 <b>'최종 배당'</b>으로 따로 표시해둬. 경기가 끝나면 어느 팀이 이겼는지도 같은 줄에 적어. 이 두 가지가 있어야 "어느 사이트 배당이 맞았나"를 나중에 찾아볼 수 있어.</span></li>
+          <li><b>매주 자동으로 채워 넣기</b><span>일주일에 한 번, 지난 주에 끝난 경기의 결과를 받아와서 빈칸을 채우는 작업을 예약해두면 돼. 일요일 밤에 한 번 돌게 걸어두면 손 댈 일이 없어. 그러면 아카이브가 계속 쌓여.</span></li>
+          <li><b>배당 숫자로 모아서 보기</b><span>최종 배당과 결과가 한 줄에 다 있으면 "배당 1.77을 받은 팀은 과거에 몇 % 이겼나", "두산은 배당 1.60 미만일 때 몇 승 했나"를 바로 뽑을 수 있어. '지난 경기 기록' 탭이 그걸 하는 화면이야.</span></li>
+          <li><b>알림 받고 화면으로 보기</b><span>움직임이 잡히면 카카오톡이나 텔레그램으로 보내고, 이 화면 같은 걸로 확인. 컴퓨터를 계속 켜둘 필요는 없고, 무료 서버 하나 빌려서 돌려도 돼.</span></li>
+        </ol>
+
+        <h3>알아야 할 계산 4개</h3>
+
+        <div class="formula">
+          <b>1. 배당을 확률로 바꾸기</b>
+          <p>1을 배당으로 나누면 끝. 배당 2.50이면 1 ÷ 2.50 = 0.4, 즉 <b>이길 확률 40%로 본다</b>는 뜻이야.</p>
+          <div class="eq">확률 = 1 ÷ 배당</div>
+        </div>
+
+        <div class="formula">
+          <b>2. 사이트 수수료 알아내기</b>
+          <p>양쪽 확률을 더하면 100%가 나와야 정상인데, 실제로는 105%처럼 넘게 나와. 그 초과분이 사이트가 떼가는 수수료야. Pinnacle은 2% 정도로 싸고, 보통 사이트는 5~6%를 떼.</p>
+          <div class="eq">수수료 = (모든 확률을 더한 값) − 100%</div>
+        </div>
+
+        <div class="formula">
+          <b>3. 수수료 빼고 비교하기</b>
+          <p>사이트마다 수수료가 다르니까 그대로 비교하면 안 돼. 수수료를 걷어내서 합이 딱 100%가 되게 맞춘 다음에 비교해야 공평해.</p>
+          <div class="eq">비교용 확률 = 그 팀 확률 ÷ (모든 확률을 더한 값)</div>
+        </div>
+
+        <div class="formula">
+          <b>4. "돈이 쏠렸다"고 판단하는 기준</b>
+          <p>한 사이트만 움직인 건 그냥 실수일 수 있어. 여러 사이트가 <b>동시에 같은 방향으로</b> 움직여야 진짜 신호야. 그래서 조건 두 개를 같이 봐.</p>
+          <div class="eq">① 3시간 사이 확률이 2.5%p 넘게 올랐다<br>② 5곳 중 3곳 이상이 같은 방향으로 움직였다</div>
+        </div>
+
+        <h3>배당 받아오는 프로그램 (파이썬)</h3>
+        <p>30분마다 배당을 받아서 <code class="k">odds.db</code> 파일에 쌓는 코드야. 열쇠(키)만 바꿔 넣으면 바로 돌아가.</p>
+        <pre>import requests, sqlite3, time
+from datetime import datetime
+
+KEY = "발급받은_키"
+SPORT = "soccer_epl"
+
+db = sqlite3.connect("odds.db")
+db.execute("""CREATE TABLE IF NOT EXISTS snap(
+  ts TEXT, game_id TEXT, commence TEXT,
+  home TEXT, away TEXT, book TEXT,
+  outcome TEXT, price REAL)""")
+
+def collect():
+    r = requests.get(
+        f"https://api.the-odds-api.com/v4/sports/{SPORT}/odds",
+        params={"apiKey": KEY, "regions": "eu",
+                "markets": "h2h", "oddsFormat": "decimal"})
+    ts = datetime.utcnow().isoformat()
+    for g in r.json():
+        for bk in g["bookmakers"]:
+            for o in bk["markets"][0]["outcomes"]:
+                db.execute("INSERT INTO snap VALUES(?,?,?,?,?,?,?,?)",
+                    (ts, g["id"], g["commence_time"],
+                     g["home_team"], g["away_team"],
+                     bk["key"], o["name"], o["price"]))
+    db.commit()
+
+while True:          # 30분마다
+    collect()
+    time.sleep(1800)</pre>
+
+        <h3>꼭 알아둘 것</h3>
+        <p><b>경기 직전 배당이 제일 정확해.</b> "지난 경기 기록" 탭에서 확인할 수 있는데, 처음 나온 배당보다 경기 직전 배당이 결과를 더 잘 맞혔어. 배당은 전 세계 돈이 몰리면서 계속 다듬어지거든.</p>
+        <p>그래서 목표를 <b>"내가 배당보다 잘 안다"가 아니라 "느린 사이트가 아직 못 따라왔다"</b>를 찾는 쪽으로 잡는 게 현실적이야. 이게 이 프로그램이 하는 일이야.</p>
+        <p>그리고 지금 화면의 적중률·수익률 숫자는 <b>가짜 데이터라 아무 의미가 없어.</b> 진짜 데이터를 최소 6개월은 그냥 쌓아놓고 검증한 다음에 판단해야 해. 국내에서 스포츠 베팅은 합법 범위가 제한돼 있으니, 이건 배당 데이터를 들여다보는 분석 도구로 보는 게 맞아.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script id="odds-data" type="application/json">{"demo":false,"generatedAt":"2026-09-22 01:14","books":[{"key":"pinnacle","name":"Pinnacle","sharp":true,"margin":0.05},{"key":"onexbet","name":"1xBet","sharp":false,"margin":0.05},{"key":"winamax_fr","name":"Winamax Fr","sharp":false,"margin":0.05},{"key":"winamax_de","name":"Winamax De","sharp":false,"margin":0.05},{"key":"betclic_fr","name":"Betclic Fr","sharp":false,"margin":0.05}],"live":[],"history":[]}</script>
+<script>
+(function () {
+  "use strict";
+  const DATA = JSON.parse(document.getElementById("odds-data").textContent);
+  const BOOKS = DATA.books;
+  const SERIES = ["var(--s1)", "var(--s2)", "var(--s3)", "var(--s4)", "var(--s5)"];
+  const $ = (id) => document.getElementById(id);
+  const IS_DEMO = DATA.demo !== false;
+  const CAVEAT = IS_DEMO
+    ? "지금은 연습용 가짜 데이터라 이 숫자로 판단하면 안 돼. 진짜 배당이 쌓이면 같은 칸이 의미를 갖게 돼."
+    : "과거 기록일 뿐이라 다음 경기를 맞춰주진 않아. 표본이 적은 칸은 그냥 우연일 수 있으니 건수를 꼭 같이 봐.";
+  const fmtO = (v) => v.toFixed(2);
+  const fmtP = (v) => (v * 100).toFixed(1) + "%";
+
+  /* ---------------- 계산 ---------------- */
+  function devig(odds) {
+    const raw = odds.map((o) => 1 / o);
+    const s = raw.reduce((a, b) => a + b, 0);
+    return raw.map((r) => r / s);
+  }
+  function margin(odds) {
+    return odds.reduce((a, o) => a + 1 / o, 0) - 1;
+  }
+  // 게임별 시계열 -> 북별 확률행렬, 합의확률
+  function probPaths(game) {
+    const T = game.times.length, K = game.labels.length;
+    const byBook = {};
+    BOOKS.forEach((b) => {
+      byBook[b.key] = game.odds[b.key].map((row) => devig(row));
+    });
+    const consensus = [];
+    for (let t = 0; t < T; t++) {
+      const acc = new Array(K).fill(0);
+      BOOKS.forEach((b) => byBook[b.key][t].forEach((p, j) => (acc[j] += p)));
+      consensus.push(acc.map((v) => v / BOOKS.length));
+    }
+    return { byBook, consensus, T, K };
+  }
+  // 스팀무브 탐지: W스텝 창에서 합의확률 delta >= thr, 같은 방향 북 >= minBooks
+  function detectSteam(game, thr, minBooks, W) {
+    W = W || 3;
+    const { byBook, consensus, T, K } = probPaths(game);
+    let best = null;
+    for (let t = W; t < T; t++) {
+      for (let j = 0; j < K; j++) {
+        const d = consensus[t][j] - consensus[t - W][j];
+        if (d < thr) continue;
+        let moved = 0;
+        BOOKS.forEach((b) => {
+          if (byBook[b.key][t][j] - byBook[b.key][t - W][j] >= thr * 0.55) moved++;
+        });
+        if (moved < minBooks) continue;
+        if (!best || d > best.delta) {
+          best = {
+            t, j, delta: d, moved,
+            from: consensus[t - W][j], to: consensus[t][j],
+            time: game.times[t], stepsAgo: T - 1 - t,
+          };
+        }
+      }
+    }
+    return best;
+  }
+  // Pinnacle 공정확률 기준 각 북 EV
+  function evTable(game, t) {
+    const idx = t == null ? game.times.length - 1 : t;
+    const fair = devig(game.odds.pinnacle[idx]);
+    return BOOKS.map((b, bi) => {
+      const odds = game.odds[b.key][idx];
+      const prev = game.odds[b.key][Math.max(0, idx - 3)];
+      return {
+        book: b, color: SERIES[bi], odds, prev,
+        probs: devig(odds), margin: margin(odds),
+        ev: odds.map((o, j) => fair[j] * o - 1),
+      };
+    });
+  }
+
+  /* ---------------- 상단 통계 ---------------- */
+  const SENS = { 0.02: [0.02, 2], 0.025: [0.025, 3], 0.035: [0.035, 4] };
+  let sens = 0.025;
+
+  function currentAlerts() {
+    const [thr, mb] = SENS[sens];
+    return DATA.live
+      .map((g) => ({ game: g, ev: detectSteam(g, thr, mb) }))
+      .filter((x) => x.ev)
+      .sort((a, b) => b.ev.delta - a.ev.delta);
+  }
+
+  function renderStats() {
+    const alerts = currentAlerts();
+    let avgMargin = 0, pinMargin = 0;
+    if (DATA.live.length) {
+      avgMargin = DATA.live.reduce((a, g) => {
+        const last = g.times.length - 1;
+        return a + BOOKS.reduce((s, b) => s + margin(g.odds[b.key][last]), 0) / BOOKS.length;
+      }, 0) / DATA.live.length;
+      const pin = BOOKS.find((b) => b.sharp) || BOOKS[0];
+      pinMargin = DATA.live.reduce((a, g) => a + margin(g.odds[pin.key][g.times.length - 1]), 0) / DATA.live.length;
+    } else {
+      const ms = [];
+      DATA.history.slice(0, 300).forEach((m) => {
+        const bs = BOOKS.filter((b) => Array.isArray(m.closeBy[b.key]));
+        if (bs.length) ms.push(bs.reduce((a, b) => a + margin(m.closeBy[b.key]), 0) / bs.length);
+      });
+      avgMargin = ms.length ? ms.reduce((a, b) => a + b, 0) / ms.length : 0;
+      pinMargin = (BOOKS.find((b) => b.sharp) || BOOKS[0] || {}).margin || 0;
+    }
+    const hist = DATA.history;
+    const yrs = new Set(hist.map((h) => h.date.slice(0, 4)));
+    const items = [
+      ["보고 있는 경기", DATA.live.length, "경기", DATA.live.length ? `배팅 사이트 ${BOOKS.length}곳에서 수집` : "아직 모으는 중"],
+      ["돈이 쏠린 경기", alerts.length, "경기", alerts.length ? `가장 큰 변화 ${(alerts[0].ev.delta * 100).toFixed(1)}%p` : "지금은 조용함"],
+      ["사이트 평균 수수료", (avgMargin * 100).toFixed(1), "%", `가장 싼 곳 ${(BOOKS.find((b) => b.sharp) || BOOKS[0] || {name:"-"}).name} ${(pinMargin * 100).toFixed(1)}%`],
+      ["쌓아둔 지난 경기", hist.length, "경기", `${Math.min(...yrs)}년~${Math.max(...yrs)}년`],
+    ];
+    $("stats").innerHTML = items
+      .map(
+        ([k, v, u, sub]) =>
+          `<div class="stat"><dt>${k}</dt><dd>${v}<small>${u}</small></dd><div class="sub">${sub}</div></div>`
+      )
+      .join("");
+    $("c-live").textContent = DATA.live.length;
+    $("c-alert").textContent = alerts.length;
+    $("c-arch").textContent = DATA.history.length;
+  }
+
+  /* ---------------- 라이브 탭 ---------------- */
+  let selId = DATA.live.length ? DATA.live[0].id : null;
+  let selOut = 0;
+
+  function renderList() {
+    if (!DATA.live.length) {
+      $("mlist").innerHTML =
+        `<div class="empty">아직 예정 경기가 없어.<br>배당을 몇 번 더 모으면 여기에 나와.</div>`;
+      return;
+    }
+    const alerts = currentAlerts();
+    const amap = {};
+    alerts.forEach((a) => (amap[a.game.id] = a.ev));
+    $("mlist").innerHTML = DATA.live
+      .map((g) => {
+        const ev = amap[g.id];
+        const tag = ev
+          ? `<span class="pill steam">돈 쏠림 +${(ev.delta * 100).toFixed(1)}%p</span>`
+          : `<span class="pill quiet">조용함</span>`;
+        const best = Math.max(...evTable(g).flatMap((r) => r.ev));
+        const vtag = best > 0.015 ? `<span class="pill value">배당 좋음 +${(best * 100).toFixed(1)}%</span>` : "";
+        return `<button class="mrow" data-id="${g.id}" aria-current="${g.id === selId}">
+          <div class="lg">${g.league}</div>
+          <div class="tm">${g.home} <span style="color:var(--muted)">vs</span> ${g.away}</div>
+          <div class="meta"><span class="num">${g.kickoff}</span>${tag}${vtag}</div>
+        </button>`;
+      })
+      .join("");
+    $("mlist")
+      .querySelectorAll(".mrow")
+      .forEach((b) =>
+        b.addEventListener("click", () => {
+          selId = b.dataset.id;
+          selOut = 0;
+          renderList();
+          renderDetail();
+        })
+      );
+  }
+
+  function game() {
+    return DATA.live.find((g) => g.id === selId);
+  }
+
+  function renderDetail() {
+    const g = game();
+    if (!g) {
+      $("detail-title").textContent = "아직 볼 경기가 없어";
+      $("detail-sub").textContent = "";
+      $("outsel").innerHTML = "";
+      $("legend").innerHTML = "";
+      $("chart").innerHTML = "";
+      $("otable").innerHTML = "";
+      const btn = $("go-same");
+      if (btn) btn.hidden = true;
+      return;
+    }
+    const btn0 = $("go-same");
+    if (btn0) btn0.hidden = false;
+    $("detail-title").textContent = `${g.home} vs ${g.away}`;
+    $("detail-sub").textContent = `${g.league} · ${g.market === "1X2" ? "승무패" : "승패"} · ${g.kickoff} 경기 시작`;
+    $("outsel").innerHTML = g.labels
+      .map(
+        (l, i) =>
+          `<button class="chip" data-i="${i}" aria-pressed="${i === selOut}">${l}</button>`
+      )
+      .join("");
+    $("outsel")
+      .querySelectorAll(".chip")
+      .forEach((c) =>
+        c.addEventListener("click", () => {
+          selOut = +c.dataset.i;
+          renderDetail();
+        })
+      );
+    $("legend").innerHTML = BOOKS.map(
+      (b, i) =>
+        `<span class="i"><span class="dot" style="background:${SERIES[i]}"></span>${b.name}${b.sharp ? " (기준 사이트)" : ""}</span>`
+    ).join("");
+    drawChart(g);
+    renderOddsTable(g);
+  }
+
+  /* ---------------- 라인 차트 ---------------- */
+  const CW = 720, CH = 300, PL = 52, PR = 18, PT = 16, PB = 30;
+  let chartState = null;
+
+  function drawChart(g) {
+    const { byBook, T } = probPaths(g);
+    const vals = [];
+    BOOKS.forEach((b) => byBook[b.key].forEach((row) => vals.push(row[selOut])));
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    const pad = Math.max(0.012, (hi - lo) * 0.2);
+    lo = Math.max(0, lo - pad); hi = Math.min(1, hi + pad);
+    const x = (t) => PL + (t / (T - 1)) * (CW - PL - PR);
+    const y = (p) => PT + (1 - (p - lo) / (hi - lo)) * (CH - PT - PB);
+
+    // y 눈금
+    const ticks = 4, parts = [];
+    for (let i = 0; i <= ticks; i++) {
+      const p = lo + ((hi - lo) * i) / ticks, yy = y(p);
+      parts.push(
+        `<line x1="${PL}" y1="${yy.toFixed(1)}" x2="${CW - PR}" y2="${yy.toFixed(1)}" stroke="var(--line)" stroke-width="1"/>`,
+        `<text x="${PL - 8}" y="${(yy + 4).toFixed(1)}" text-anchor="end" font-size="11" font-family="IBM Plex Mono, monospace" fill="var(--muted)">${(p * 100).toFixed(1)}%</text>`
+      );
+    }
+    // x 눈금
+    const step = Math.max(1, Math.round((T - 1) / 5));
+    for (let t = 0; t < T; t += step) {
+      const near = x(t) > CW - PR - 40 ? "end" : x(t) < PL + 40 ? "start" : "middle";
+      const tx = near === "end" ? CW - PR : near === "start" ? PL : x(t);
+      parts.push(
+        `<text x="${tx.toFixed(1)}" y="${CH - 9}" text-anchor="${near}" font-size="10.5" font-family="IBM Plex Mono, monospace" fill="var(--muted)">${g.times[t]}</text>`
+      );
+    }
+    // 스팀 마커
+    const [thr, mb] = SENS[sens];
+    const ev = detectSteam(g, thr, mb);
+    if (ev && ev.j === selOut) {
+      const xx = x(ev.t);
+      parts.push(
+        `<line x1="${xx.toFixed(1)}" y1="${PT}" x2="${xx.toFixed(1)}" y2="${CH - PB}" stroke="var(--up)" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.75"/>`,
+        `<text x="${Math.min(xx + 6, CW - PR - 78).toFixed(1)}" y="${PT + 13}" font-size="11" font-weight="600" font-family="IBM Plex Sans KR, sans-serif" fill="var(--up)">여기서 돈 쏠림</text>`
+      );
+    }
+    // 라인
+    BOOKS.forEach((b, i) => {
+      const pts = byBook[b.key].map((row, t) => `${x(t).toFixed(1)},${y(row[selOut]).toFixed(1)}`);
+      parts.push(
+        `<polyline points="${pts.join(" ")}" fill="none" stroke="${SERIES[i]}" stroke-width="${b.sharp ? 2.6 : 1.8}" stroke-linejoin="round" stroke-linecap="round" opacity="${b.sharp ? 1 : 0.85}"/>`
+      );
+      const last = byBook[b.key][T - 1][selOut];
+      parts.push(
+        `<circle cx="${x(T - 1).toFixed(1)}" cy="${y(last).toFixed(1)}" r="4.5" fill="${SERIES[i]}" stroke="var(--surface)" stroke-width="2"/>`
+      );
+    });
+    parts.push(`<line class="cross" x1="0" y1="${PT}" x2="0" y2="${CH - PB}" stroke="var(--line-strong)" stroke-width="1" opacity="0"/>`);
+
+    const svg = $("chart");
+    svg.setAttribute("viewBox", `0 0 ${CW} ${CH}`);
+    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    svg.innerHTML = parts.join("");
+    chartState = { byBook, T, x, y, g };
+  }
+
+  (function bindChartHover() {
+    const box = $("chartbox"), svg = $("chart"), tip = $("tip");
+    function move(e) {
+      if (!chartState) return;
+      const r = svg.getBoundingClientRect();
+      const cx = e.clientX != null ? e.clientX : (e.touches && e.touches[0].clientX);
+      if (cx == null) return;
+      const vx = ((cx - r.left) / r.width) * CW;
+      const { T, x, y, byBook } = chartState;
+      let t = Math.round(((vx - PL) / (CW - PL - PR)) * (T - 1));
+      t = Math.max(0, Math.min(T - 1, t));
+      const line = svg.querySelector(".cross");
+      if (line) {
+        line.setAttribute("x1", x(t)); line.setAttribute("x2", x(t));
+        line.setAttribute("opacity", "1");
+      }
+      const rows = BOOKS.map((b, i) => {
+        const p = byBook[b.key][t][selOut];
+        return `<div class="r"><span><span class="dot" style="background:${SERIES[i]}"></span>${b.name}</span><b>${fmtP(p)}</b></div>`;
+      }).join("");
+      tip.innerHTML = `<div class="t">${chartState.g.times[t]}</div>${rows}`;
+      tip.classList.add("on");
+      const bw = box.getBoundingClientRect();
+      const px = (x(t) / CW) * bw.width;
+      tip.style.left = Math.min(Math.max(px + 14, 4), bw.width - tip.offsetWidth - 4) + "px";
+      tip.style.top = "12px";
+    }
+    box.addEventListener("mousemove", move);
+    box.addEventListener("touchmove", move, { passive: true });
+    box.addEventListener("mouseleave", () => {
+      tip.classList.remove("on");
+      const line = svg.querySelector(".cross");
+      if (line) line.setAttribute("opacity", "0");
+    });
+  })();
+
+  /* ---------------- 배당 테이블 ---------------- */
+  function renderOddsTable(g) {
+    const rows = evTable(g);
+    const bestPer = g.labels.map((_, j) => Math.max(...rows.map((r) => r.odds[j])));
+    const head = `<thead><tr><th>배팅 사이트</th>${g.labels
+      .map((l) => `<th>${l}</th>`)
+      .join("")}<th>수수료</th><th>배당 유리한 정도</th></tr></thead>`;
+    const body = rows
+      .map((r, i) => {
+        const cells = r.odds
+          .map((o, j) => {
+            const d = o - r.prev[j];
+            const cls = Math.abs(d) < 0.005 ? "n" : d < 0 ? "u" : "d";
+            const arrow = Math.abs(d) < 0.005 ? "–" : (d > 0 ? "▲" : "▼") + Math.abs(d).toFixed(2);
+            return `<td class="o"><span class="${o === bestPer[j] ? "best" : ""}">${fmtO(o)}</span><br><span class="delta ${cls}">${arrow}</span></td>`;
+          })
+          .join("");
+        const bev = Math.max(...r.ev);
+        return `<tr class="${r.book.sharp ? "sharp" : ""}">
+          <td><span class="dot" style="background:${SERIES[i]}"></span>${r.book.name}${r.book.sharp ? ' <span class="pill quiet">기준</span>' : ""}</td>
+          ${cells}
+          <td class="o">${(r.margin * 100).toFixed(1)}%</td>
+          <td><span class="evtag ${bev > 0.01 ? "pos" : "neg"}">${bev > 0 ? "+" : ""}${(bev * 100).toFixed(1)}%</span></td>
+        </tr>`;
+      })
+      .join("");
+    $("otable").innerHTML =
+      head +
+      `<tbody>${body}</tbody>` +
+      `<tfoot><tr><td colspan="${g.labels.length + 3}" style="text-align:left; color:var(--text-2); font-size:11.5px; border-bottom:0; padding-top:10px; white-space:normal; line-height:1.7;">
+        <b>굵은 숫자</b>가 그 결과에 가장 높은 배당(= 같은 돈 걸어도 제일 많이 받는 곳)이야.
+        배당 밑 화살표는 3시간 전보다 얼마나 변했는지 — <span class="delta u">▼ 배당이 내려갔다 = 거기로 돈이 몰렸다</span>,
+        <span class="delta d">▲ 배당이 올라갔다 = 인기가 식었다</span>.
+        맨 오른쪽은 수수료가 제일 싼 Pinnacle을 정답에 가깝다고 보고, 그 사이트 배당이 얼마나 후한지 비교한 값이야. 플러스면 Pinnacle보다 유리하다는 뜻.
+      </td></tr></tfoot>`;
+  }
+
+  /* ---------------- 알림 탭 ---------------- */
+  function renderAlerts() {
+    const alerts = currentAlerts();
+    const [thr, mb] = SENS[sens];
+    $("alert-note").textContent = `지금 기준: 3시간 사이에 이길 확률이 ${(thr * 100).toFixed(1)}%p 넘게 오르고, 사이트 ${BOOKS.length}곳 중 ${mb}곳 이상이 같이 움직인 경기만 표시`;
+    if (!alerts.length) {
+      $("alerts").innerHTML = `<div class="panel"><div class="empty">지금은 눈에 띄게 움직인 경기가 없어. 왼쪽에서 "작은 변화도 다 보기"로 바꿔봐.</div></div>`;
+      return;
+    }
+    $("alerts").innerHTML = alerts
+      .map(({ game: g, ev }) => {
+        const strong = ev.delta >= 0.045;
+        const oddsNow = g.odds.pinnacle[g.times.length - 1][ev.j];
+        const oddsThen = g.odds.pinnacle[ev.t - 3][ev.j];
+        return `<article class="alert ${strong ? "" : "mild"}">
+          <div class="lg">${g.league} · ${g.kickoff} 경기 시작</div>
+          <h3>${g.home} vs ${g.away}</h3>
+          <div class="move">
+            <span class="big">+${(ev.delta * 100).toFixed(1)}%p</span>
+            <span class="desc"><b>${g.labels[ev.j]}</b> 쪽으로 돈이 쏠렸어</span>
+          </div>
+          <div class="desc">
+            이길 확률을 <span class="num">${fmtP(ev.from)}</span>로 보다가 <span class="num">${fmtP(ev.to)}</span>로 올려봄<br>
+            배당은 <span class="num">${fmtO(oddsThen)}</span>에서 <span class="num">${fmtO(oddsNow)}</span>로 떨어짐
+          </div>
+          <div class="foot">
+            <span>사이트 ${BOOKS.length}곳 중 ${ev.moved}곳이 같이 움직임 · ${ev.stepsAgo === 0 ? "방금 감지" : `${ev.stepsAgo}시간 전 감지`}</span>
+            <button class="go" data-id="${g.id}" data-j="${ev.j}">그래프 보기 →</button>
+          </div>
+        </article>`;
+      })
+      .join("");
+    $("alerts")
+      .querySelectorAll(".go")
+      .forEach((b) =>
+        b.addEventListener("click", () => {
+          selId = b.dataset.id;
+          selOut = +b.dataset.j;
+          switchTab("tab-live");
+          renderList();
+          renderDetail();
+        })
+      );
+  }
+
+  $("go-same").addEventListener("click", () => {
+    const g = game();
+    if (!g) return;
+    const t = g.times.length - 1;
+    const avg = g.labels.map(
+      (_, j) => BOOKS.reduce((a, b) => a + g.odds[b.key][t][j], 0) / BOOKS.length
+    );
+    jumpToSameOdds(g.labels, avg);
+  });
+
+  $("alert-sens").addEventListener("change", (e) => {
+    sens = e.target.value;
+    renderStats();
+    renderList();
+    renderDetail();
+    renderAlerts();
+  });
+
+  /* ---------------- 아카이브 탭 ---------------- */
+  /* ================= 지난 경기 기록 ================= */
+
+  /* ---------- 0. 같은 배당 찾기 ---------- */
+  /* 실제 배팅 사이트처럼 배당을 일정한 눈금에 맞춰 떨어뜨림 */
+  function snap(o) {
+    let base, step;
+    if (o < 2) { base = 1.01; step = 0.03; }
+    else if (o < 3) { base = 2.0; step = 0.06; }
+    else if (o < 5) { base = 3.0; step = 0.12; }
+    else { base = 5.0; step = 0.25; }
+    return +(base + Math.round((o - base) / step) * step).toFixed(2);
+  }
+  /* 경기별 대표 배당 = 사이트 5곳 평균을 눈금에 맞춘 값 */
+  let MAINODDS = null;
+  function mainOdds() {
+    if (MAINODDS) return MAINODDS;
+    MAINODDS = {};
+    DATA.history.forEach((m) => {
+      const bs = booksOf(m);
+      MAINODDS[m.id] = bs.length
+        ? m.labels.map((_, j) => snap(bs.reduce((a, b) => a + m.closeBy[b.key][j], 0) / bs.length))
+        : m.labels.map(() => 0);
+    });
+    return MAINODDS;
+  }
+
+  /* 종목을 바꾸면 그 종목에서 가장 흔했던 배당 조합으로 자동 세팅 */
+  let SM_PREV_K = null;
+  function commonPair(K) {
+    const MO = mainOdds(), freq = {};
+    DATA.history.forEach((m) => {
+      if (m.labels.length !== K) return;
+      const k = MO[m.id].join("|");
+      freq[k] = (freq[k] || 0) + 1;
+    });
+    const top = Object.keys(freq).sort((a, b) => freq[b] - freq[a])[0];
+    return top ? top.split("|") : null;
+  }
+  function applyDefaultPair(K) {
+    const p = commonPair(K);
+    if (!p) return;
+    const f = (v) => (+v).toFixed(2);
+    $("sm-h").value = f(p[0]);
+    if (K === 3) { $("sm-d").value = f(p[1]); $("sm-a").value = f(p[2]); }
+    else $("sm-a").value = f(p[1]);
+  }
+
+  function renderSameOdds() {
+    const K = +$("sm-type").value;
+    if (SM_PREV_K !== null && SM_PREV_K !== K) applyDefaultPair(K);
+    SM_PREV_K = K;
+    const tol = parseFloat($("sm-tol").value);
+    const league = $("sm-league").value;
+    $("sm-nodraw-wrap").hidden = K !== 3;
+    const noDraw = K === 3 && $("sm-nodraw").checked;
+    $("sm-dwrap").hidden = K === 2 || noDraw;
+
+    const want = K === 3
+      ? [+$("sm-h").value, +$("sm-d").value, +$("sm-a").value]
+      : [+$("sm-h").value, +$("sm-a").value];
+    if (want.some((v) => !isFinite(v) || v <= 1)) return;
+
+    const MO = mainOdds();
+    const hits = DATA.history.filter((m) => {
+      if (m.labels.length !== K) return false;
+      if (league && m.league !== league) return false;
+      const o = MO[m.id];
+      const check = noDraw ? [0, 2] : o.map((_, j) => j);
+      return check.every((j) => Math.abs(o[j] - want[j]) <= tol + 1e-9);
+    });
+
+    /* 요약 */
+    const n = hits.length;
+    const cnt = new Array(K).fill(0);
+    hits.forEach((m) => cnt[m.winIdx]++);
+    const capNames = K === 3 ? ["홈 승", "무승부", "원정 승"] : ["홈 승", "원정 승"];
+    $("sm-summary").innerHTML =
+      `<div class="sumbar">
+        <div><div class="k">총 경기 수</div><div class="v">${n}</div></div>
+        ${cnt
+          .map(
+            (c, j) =>
+              `<div><div class="k">${capNames[j]}</div><div class="v" style="color:${j === 0 ? "var(--up)" : j === K - 1 ? "var(--down)" : "var(--text-2)"}">${n ? ((c / n) * 100).toFixed(1) : "0.0"}%</div><div class="k">${c}경기</div></div>`
+          )
+          .join("")}
+      </div>` +
+      (n === 0
+        ? `<p class="note" style="margin:0 0 14px;">이 배당 조합이 과거에 없었어. 오른쪽 <b>허용 범위</b>를 넓게 바꿔봐.</p>`
+        : n < 15
+        ? `<p class="note" style="margin:0 0 14px; color:var(--warn);">표본이 ${n}경기뿐이라 비율은 믿기 어려워. 범위를 넓히거나 종목 필터를 풀어봐.</p>`
+        : `<p class="note" style="margin:0 0 14px;">배당 ${(noDraw ? [want[0], want[2]] : want).map((v) => v.toFixed(2)).join(" / ")} 조합으로 과거 <b>${n}경기</b>를 찾았어.${noDraw ? " (무승부 배당은 안 따짐)" : ""}</p>`);
+
+    /* 표 */
+    if (!n) {
+      $("sm-table").innerHTML = "";
+      return;
+    }
+    const head = `<thead><tr>
+      <th>날짜</th><th>리그</th><th>홈</th><th>점수</th><th>원정</th>
+      ${K === 3 ? "<th>홈</th><th>무</th><th>원정</th>" : "<th>홈 배당</th><th>원정 배당</th>"}
+      <th>결과</th>
+    </tr></thead>`;
+    const body = hits
+      .slice(0, 300)
+      .map((m) => {
+        const o = MO[m.id];
+        const oc = o
+          .map((v, j) => `<td class="o ${j === m.winIdx ? "hit" : "miss"}">${v.toFixed(2)}</td>`)
+          .join("");
+        return `<tr>
+          <td class="o" style="text-align:left">${m.date}</td>
+          <td style="text-align:left; font-size:11.5px; color:var(--text-2)">${m.league}</td>
+          <td style="text-align:right">${m.home}</td>
+          <td class="scorecell">${m.score[0]} : ${m.score[1]}</td>
+          <td style="text-align:left">${m.away}</td>
+          ${oc}
+          <td style="text-align:left"><b>${m.labels[m.winIdx]}</b></td>
+        </tr>`;
+      })
+      .join("");
+    $("sm-table").innerHTML =
+      head +
+      `<tbody>${body}</tbody>` +
+      `<tfoot><tr><td colspan="${K === 3 ? 9 : 8}" style="text-align:left; color:var(--text-2); font-size:11.5px; border-bottom:0; padding-top:10px; white-space:normal; line-height:1.7;">
+        배당 숫자 중 <span class="hit" style="font-weight:600;">빨간색</span>이 그 경기에서 실제로 이긴 쪽이야.
+        ${n > 300 ? `조건에 맞는 ${n}경기 중 최근 300경기만 표시했어.` : ""}
+        배당은 사이트 5곳 평균을 실제 사이트처럼 일정한 눈금에 맞춘 값이야.
+      </td></tr></tfoot>`;
+  }
+
+  function jumpToSameOdds(labels, odds) {
+    $("sm-type").value = String(labels.length);
+    SM_PREV_K = labels.length;
+    $("sm-h").value = snap(odds[0]).toFixed(2);
+    if (labels.length === 3) {
+      $("sm-d").value = snap(odds[1]).toFixed(2);
+      $("sm-a").value = snap(odds[2]).toFixed(2);
+    } else {
+      $("sm-a").value = snap(odds[1]).toFixed(2);
+    }
+    $("sm-league").value = "";
+    switchTab("tab-arch");
+    renderSameOdds();
+    document.getElementById("p-arch").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+
+  /* 최종 배당 레코드: 경기 × 각 결과 = 한 줄 (배당은 사이트 5곳 평균) */
+  let RECORDS = null;
+  function records() {
+    if (RECORDS) return RECORDS;
+    RECORDS = [];
+    DATA.history.forEach((m) => {
+      const K = m.labels.length;
+      const bs = booksOf(m);
+      if (!bs.length) return;
+      const avgOdds = [];
+      for (let j = 0; j < K; j++) {
+        avgOdds.push(bs.reduce((a, b) => a + m.closeBy[b.key][j], 0) / bs.length);
+      }
+      const fair = devig(avgOdds);
+      for (let j = 0; j < K; j++) {
+        const isDraw = m.market === "1X2" && j === 1;
+        RECORDS.push({
+          id: m.id, date: m.date, league: m.league, sport: m.sport,
+          team: m.labels[j],
+          opp: isDraw ? null : j === 0 ? m.away : m.home,
+          isHome: j === 0,
+          isDraw,
+          odds: avgOdds[j],
+          fair: fair[j],
+          won: j === m.winIdx,
+          winner: m.labels[m.winIdx],
+        });
+      }
+    });
+    return RECORDS;
+  }
+
+  const BUCKETS = [
+    [1.01, 1.30], [1.30, 1.50], [1.50, 1.70], [1.70, 1.90], [1.90, 2.10],
+    [2.10, 2.40], [2.40, 2.80], [2.80, 3.50], [3.50, 5.00], [5.00, 99],
+  ];
+  const bLabel = (b) => (b[1] >= 99 ? "5.00 이상" : `${b[0].toFixed(2)}~${b[1].toFixed(2)}`);
+  function bucketOf(o) {
+    for (let i = 0; i < BUCKETS.length; i++) if (o >= BUCKETS[i][0] && o < BUCKETS[i][1]) return i;
+    return o >= 5 ? BUCKETS.length - 1 : 0;
+  }
+  function tally(rs) {
+    const n = rs.length;
+    if (!n) return { n: 0 };
+    const w = rs.filter((r) => r.won).length;
+    const fair = rs.reduce((a, r) => a + r.fair, 0) / n;
+    const profit = rs.reduce((a, r) => a + (r.won ? r.odds - 1 : -1), 0);
+    return { n, w, rate: w / n, fair, roi: profit / n, profit };
+  }
+
+  /* ---------- 1. 배당 조회기 ---------- */
+  function renderLookup() {
+    const league = $("lk-league").value;
+    const raw = parseFloat($("lk-odds").value);
+    const odds = isFinite(raw) && raw > 1 ? raw : 1.77;
+    const bi = bucketOf(odds);
+    const B = BUCKETS[bi];
+    const pool = records().filter(
+      (r) => (!league || r.league === league) && bucketOf(r.odds) === bi
+    );
+    const t = tally(pool);
+    if (!t.n) {
+      $("lk-result").innerHTML = `<div class="empty">그 배당 구간에 해당하는 과거 경기가 없어.</div>`;
+      return;
+    }
+    const gap = t.rate - t.fair;
+    const per = Math.round(t.roi * 10000);
+    $("lk-result").innerHTML = `
+      <p class="note" style="margin:14px 0 0;">
+        배당 <b class="num">${odds.toFixed(2)}</b>은 <b>${bLabel(B)}</b> 구간이야.
+        ${league ? `${league}에서 ` : ""}이 구간 배당을 받았던 팀이 과거에 <b>${t.n}번</b> 있었어.
+      </p>
+      <div class="lk-cards">
+        <div class="lk-card">
+          <div class="k">실제로 이긴 비율</div>
+          <div class="v">${(t.rate * 100).toFixed(1)}%</div>
+          <div class="k">${t.n}번 중 ${t.w}번</div>
+        </div>
+        <div class="lk-card">
+          <div class="k">배당이 보는 확률</div>
+          <div class="v" style="color:var(--text-2)">${(t.fair * 100).toFixed(1)}%</div>
+          <div class="k">수수료 뺀 값</div>
+        </div>
+        <div class="lk-card">
+          <div class="k">차이</div>
+          <div class="v ${gap > 0 ? "" : ""}" style="color:${gap > 0.01 ? "var(--up)" : gap < -0.01 ? "var(--down)" : "var(--text-2)"}">${gap > 0 ? "+" : ""}${(gap * 100).toFixed(1)}%p</div>
+          <div class="k">${gap > 0.01 ? "배당이 후한 편" : gap < -0.01 ? "배당이 박한 편" : "거의 일치"}</div>
+        </div>
+        <div class="lk-card">
+          <div class="k">매번 만원씩 걸었다면</div>
+          <div class="v" style="color:${per > 0 ? "var(--up)" : "var(--text-2)"}">${per > 0 ? "+" : ""}${per.toLocaleString()}원</div>
+          <div class="k">경기당 평균 손익</div>
+        </div>
+      </div>
+      <p class="note" style="margin:12px 0 0; font-size:11.5px; color:var(--muted);">
+        ※ ${CAVEAT}
+      </p>`;
+  }
+
+  /* ---------- 2. 배당 구간별 성적 ---------- */
+  function renderBuckets() {
+    const league = $("lk-league").value;
+    const rs = records().filter((r) => !league || r.league === league);
+    const stats = BUCKETS.map((B, i) => ({ B, i, ...tally(rs.filter((r) => bucketOf(r.odds) === i)) }));
+    $("bk-sub").textContent = `${league || "전체 종목"} · ${rs.length}건 기준`;
+
+    /* --- 막대 차트 --- */
+    const W = 720, Hh = 300, pl = 44, pr = 14, pt = 14, pb = 42;
+    const bw = (W - pl - pr) / BUCKETS.length;
+    const yy = (v) => pt + (1 - v) * (Hh - pt - pb);
+    const parts = [];
+    for (let i = 0; i <= 5; i++) {
+      const v = i / 5, y0 = yy(v);
+      parts.push(
+        `<line x1="${pl}" y1="${y0.toFixed(1)}" x2="${W - pr}" y2="${y0.toFixed(1)}" stroke="var(--line)" stroke-width="1"/>`,
+        `<text x="${pl - 8}" y="${(y0 + 4).toFixed(1)}" text-anchor="end" font-size="11" font-family="IBM Plex Mono, monospace" fill="var(--muted)">${(v * 100).toFixed(0)}%</text>`
+      );
+    }
+    stats.forEach((s) => {
+      const x0 = pl + s.i * bw, cx = x0 + bw / 2;
+      parts.push(
+        `<text x="${cx.toFixed(1)}" y="${Hh - 24}" text-anchor="middle" font-size="9.5" font-family="IBM Plex Mono, monospace" fill="var(--muted)">${s.B[1] >= 99 ? "5.0+" : s.B[0].toFixed(2)}</text>`
+      );
+      if (!s.n || s.n < 8) {
+        parts.push(
+          `<text x="${cx.toFixed(1)}" y="${(Hh - pb - 6).toFixed(1)}" text-anchor="middle" font-size="9.5" font-family="IBM Plex Sans KR, sans-serif" fill="var(--muted)">부족</text>`,
+          `<text x="${cx.toFixed(1)}" y="${Hh - 10}" text-anchor="middle" font-size="9.5" font-family="IBM Plex Mono, monospace" fill="var(--muted)">${s.n || 0}건</text>`
+        );
+        return;
+      }
+      const innerW = bw - 10, gap = 2, half = (innerW - gap) / 2;
+      [[s.fair, "var(--s1)", 0], [s.rate, "var(--s2)", half + gap]].forEach(([v, c, off]) => {
+        const h = Math.max(1.5, Hh - pt - pb - (yy(v) - pt));
+        parts.push(
+          `<rect x="${(x0 + 5 + off).toFixed(1)}" y="${yy(v).toFixed(1)}" width="${half.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${c}"/>`
+        );
+      });
+      parts.push(
+        `<text x="${cx.toFixed(1)}" y="${Hh - 10}" text-anchor="middle" font-size="9.5" font-family="IBM Plex Mono, monospace" fill="var(--muted)">${s.n}건</text>`
+      );
+    });
+    $("bucketchart").innerHTML = parts.join("");
+
+    /* --- 표 --- */
+    const body = stats
+      .map((s) => {
+        if (!s.n) return "";
+        const gap = s.rate - s.fair;
+        const cls = Math.abs(gap) < 0.01 ? "n" : gap > 0 ? "u" : "d";
+        const per = Math.round(s.roi * 10000);
+        return `<tr>
+          <td style="text-align:left" class="o">${bLabel(s.B)}</td>
+          <td class="o">${s.n}</td>
+          <td class="o">${s.w}</td>
+          <td class="o"><b>${(s.rate * 100).toFixed(1)}%</b></td>
+          <td class="o" style="color:var(--text-2)">${(s.fair * 100).toFixed(1)}%</td>
+          <td class="delta ${cls}">${gap > 0 ? "+" : ""}${(gap * 100).toFixed(1)}%p</td>
+          <td class="o" style="color:${per > 0 ? "var(--up)" : "var(--muted)"}">${per > 0 ? "+" : ""}${per.toLocaleString()}원</td>
+        </tr>`;
+      })
+      .join("");
+    $("bktable").innerHTML =
+      `<thead><tr>
+        <th>배당 구간</th><th>경기 수</th><th>이긴 횟수</th>
+        <th>실제로 이긴 비율</th><th>배당이 본 확률</th><th>차이</th><th>만원당 손익</th>
+      </tr></thead><tbody>${body}</tbody>
+      <tfoot><tr><td colspan="7" style="text-align:left; color:var(--text-2); font-size:11.5px; border-bottom:0; padding-top:10px; white-space:normal; line-height:1.7;">
+        맨 오른쪽은 <b>그 구간 배당에 매번 만원씩 걸었을 때 경기당 평균 손익</b>이야. 수수료 때문에 대부분 마이너스로 나오는 게 정상이고, 그게 사이트가 돈을 버는 구조야.
+      </td></tr></tfoot>`;
+  }
+
+  /* ---------- 3. 팀별 성적 ---------- */
+  const TEAM_BANDS = [
+    { lo: 1.01, hi: 1.60, name: "아주 유력 (1.60 미만)" },
+    { lo: 1.60, hi: 2.10, name: "약간 유력 (1.60~2.10)" },
+    { lo: 2.10, hi: 3.00, name: "열세 (2.10~3.00)" },
+    { lo: 3.00, hi: 99, name: "많이 열세 (3.00 이상)" },
+  ];
+
+  function renderTeams() {
+    const teams = [...new Set(records().filter((r) => !r.isDraw).map((r) => r.team))].sort();
+    $("t-team").innerHTML = teams.map((t) => `<option>${t}</option>`).join("");
+    drawTeam();
+    $("t-team").addEventListener("change", drawTeam);
+  }
+
+  function drawTeam() {
+    const name = $("t-team").value;
+    const rs = records().filter((r) => !r.isDraw && r.team === name);
+    const all = tally(rs);
+    const bands = TEAM_BANDS.map((b) => ({
+      b, ...tally(rs.filter((r) => r.odds >= b.lo && r.odds < b.hi)),
+    }));
+    const recent = rs.slice().sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 8);
+
+    const bandRows = bands
+      .map((s) => {
+        if (!s.n) {
+          return `<tr><td style="text-align:left">${s.b.name}</td><td class="o" colspan="4" style="color:var(--muted); text-align:left;">기록 없음</td></tr>`;
+        }
+        const gap = s.rate - s.fair;
+        const cls = Math.abs(gap) < 0.02 ? "n" : gap > 0 ? "u" : "d";
+        return `<tr>
+          <td style="text-align:left">${s.b.name}</td>
+          <td class="o">${s.n}</td>
+          <td class="o">${s.w}</td>
+          <td class="o"><b>${(s.rate * 100).toFixed(0)}%</b></td>
+          <td class="delta ${cls}">배당 예상 ${(s.fair * 100).toFixed(0)}%</td>
+        </tr>`;
+      })
+      .join("");
+
+    const recentRows = recent
+      .map(
+        (r) => `<tr>
+        <td class="o" style="text-align:left">${r.date}</td>
+        <td style="text-align:left">${r.isHome ? "홈" : "원정"} · ${r.opp}</td>
+        <td class="o">${fmtO(r.odds)}</td>
+        <td>${r.won ? `<span class="pill win">승</span>` : `<span class="pill lose">패</span>`}</td>
+      </tr>`
+      )
+      .join("");
+
+    $("teambox").innerHTML = `
+      <div class="lk-cards" style="margin-top:0;">
+        <div class="lk-card"><div class="k">전체 전적</div><div class="v">${all.w}승 ${all.n - all.w}패</div><div class="k">${all.n}경기</div></div>
+        <div class="lk-card"><div class="k">이긴 비율</div><div class="v">${(all.rate * 100).toFixed(1)}%</div><div class="k">배당 예상 ${(all.fair * 100).toFixed(1)}%</div></div>
+        <div class="lk-card"><div class="k">매번 만원씩 걸었다면</div><div class="v" style="color:${all.roi > 0 ? "var(--up)" : "var(--text-2)"}">${all.roi > 0 ? "+" : ""}${Math.round(all.roi * 10000).toLocaleString()}원</div><div class="k">경기당 평균</div></div>
+      </div>
+      <div class="grid2" style="margin-top:14px;">
+        <div>
+          <h3 style="font-size:13px; margin-bottom:6px;">배당대별 전적</h3>
+          <div class="tblwrap"><table>
+            <thead><tr><th>배당대</th><th>경기</th><th>승</th><th>이긴 비율</th><th>비교</th></tr></thead>
+            <tbody>${bandRows}</tbody>
+          </table></div>
+        </div>
+        <div>
+          <h3 style="font-size:13px; margin-bottom:6px;">최근 경기</h3>
+          <div class="tblwrap"><table>
+            <thead><tr><th>날짜</th><th>상대</th><th>최종 배당</th><th>결과</th></tr></thead>
+            <tbody>${recentRows}</tbody>
+          </table></div>
+        </div>
+      </div>`;
+  }
+
+  /* ---------- 4. 경기별 기록 ---------- */
+  /* 경기에 실제로 배당이 있는 사이트만 추림 (자료 출처가 섞일 수 있어서) */
+  function booksOf(m) {
+    return BOOKS.filter((b) => Array.isArray(m.closeBy && m.closeBy[b.key]));
+  }
+  function favIdx(odds) {
+    let bi = 0;
+    odds.forEach((o, i) => { if (o < odds[bi]) bi = i; });
+    return bi;
+  }
+  function isSplit(m) {
+    const bs = booksOf(m);
+    return bs.length > 1 && new Set(bs.map((b) => favIdx(m.closeBy[b.key]))).size > 1;
+  }
+
+  let archSel = null;
+
+  function renderArchive() {
+    const H = DATA.history;
+    const lg = [...new Set(H.map((m) => m.league))].sort();
+    const yr = [...new Set(H.map((m) => m.date.slice(0, 4)))].sort().reverse();
+    $("f-league").innerHTML =
+      `<option value="">전체 리그</option>` + lg.map((l) => `<option>${l}</option>`).join("");
+    $("f-year").innerHTML =
+      `<option value="">전체 기간</option>` + yr.map((y) => `<option>${y}년</option>`).join("");
+    apply();
+
+    function apply() {
+      const L = $("f-league").value, Y = $("f-year").value.replace("년", ""), S = $("f-steam").value;
+      const q = $("f-q").value.trim();
+      const rows = H.filter(
+        (m) =>
+          (!L || m.league === L) &&
+          (!Y || m.date.startsWith(Y)) &&
+          (!S || (S === "split" ? isSplit(m) : String(+m.steam) === S)) &&
+          (!q || m.home.includes(q) || m.away.includes(q))
+      );
+      $("arch-count").textContent = `${rows.length}경기 · 목록에서 경기를 누르면 사이트별 최종 배당이 나와`;
+      const shown = rows.slice(0, 120);
+      if (!shown.length) {
+        $("alist").innerHTML = `<div class="empty">조건에 맞는 경기가 없어.</div>`;
+        $("adetail").innerHTML = "";
+        return;
+      }
+      if (!shown.some((m) => m.id === archSel)) archSel = shown[0].id;
+      $("alist").innerHTML = shown
+        .map((m) => {
+          const split = isSplit(m);
+          return `<button class="mrow" data-id="${m.id}" aria-current="${m.id === archSel}">
+            <div class="lg">${m.league} · ${m.date}</div>
+            <div class="tm">${m.home} <span style="color:var(--muted)">vs</span> ${m.away}</div>
+            <div class="meta">
+              <span>이긴 쪽 <b>${m.labels[m.winIdx]}</b></span>
+              ${split ? `<span class="pill steam">의견 갈림</span>` : ""}
+            </div>
+          </button>`;
+        })
+        .join("");
+      $("alist")
+        .querySelectorAll(".mrow")
+        .forEach((b) =>
+          b.addEventListener("click", () => {
+            archSel = b.dataset.id;
+            apply();
+          })
+        );
+      renderArchDetail(H.find((m) => m.id === archSel));
+    }
+    ["f-league", "f-year", "f-steam"].forEach((id) => $(id).addEventListener("change", apply));
+    $("f-q").addEventListener("input", apply);
+  }
+
+  function renderArchDetail(m) {
+    if (!m) return;
+    const wi = m.winIdx;
+    const BS = booksOf(m);
+    const winOdds = BS.map((b) => m.closeBy[b.key][wi]);
+    const topPay = Math.max(...winOdds), lowPay = Math.min(...winOdds);
+    const topBook = BS[winOdds.indexOf(topPay)];
+    const hitCnt = BS.filter((b) => favIdx(m.closeBy[b.key]) === wi).length;
+
+    const head = `<thead><tr><th>배팅 사이트</th>${m.labels
+      .map((l, j) => `<th class="${j === wi ? "winner-col" : ""}">${l}${j === wi ? " ✓" : ""}</th>`)
+      .join("")}<th>유력하다고 본 쪽</th><th>맞았나</th></tr></thead>`;
+    const body = BS.map((b) => {
+      const i = BOOKS.indexOf(b);
+      const od = m.closeBy[b.key], fi = favIdx(od), ok = fi === wi;
+      const cells = od
+        .map((o, j) => `<td class="o ${j === wi ? "winner-col" : ""}"><span class="${j === wi && o === topPay ? "best" : ""}">${fmtO(o)}</span></td>`)
+        .join("");
+      return `<tr class="${b.sharp ? "sharp" : ""}">
+        <td><span class="dot" style="background:${SERIES[i]}"></span>${b.name}</td>
+        ${cells}
+        <td style="text-align:left">${m.labels[fi]}</td>
+        <td>${ok ? `<span class="pill win">맞음</span>` : `<span class="pill lose">틀림</span>`}</td>
+      </tr>`;
+    }).join("");
+
+    const mv = m.closeProb[wi] - m.openProb[wi];
+    const mvCls = Math.abs(mv) < 0.01 ? "n" : mv > 0 ? "u" : "d";
+    const gain = Math.round((topPay - lowPay) * 10000);
+
+    $("adetail").innerHTML = `
+      <div class="resbar">
+        <span style="font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:600;">${m.league} · ${m.date}</span>
+      </div>
+      <div class="resbar">
+        <span class="who">${m.home} vs ${m.away}</span>
+        <span class="pill win">이긴 쪽 ${m.labels[wi]}</span>
+        ${isSplit(m) ? `<span class="pill steam">사이트끼리 의견 갈림</span>` : ""}
+      </div>
+      <p class="note" style="margin:0 0 12px;">
+${BS.length}곳 중 <b>${hitCnt}곳</b>이 이긴 팀을 유력하다고 봤어.
+        경기가 다가오면서 이긴 팀의 확률을 <span class="delta ${mvCls}">${mv > 0 ? "+" : ""}${(mv * 100).toFixed(1)}%p</span> 조정했고,
+        ${m.steam ? `<b>${m.labels[m.steamIdx]}</b> 쪽으로 돈이 쏠렸던 경기야.` : "특별히 돈이 쏠리진 않았어."}
+      </p>
+      <div class="tblwrap"><table>${head}<tbody>${body}</tbody></table></div>
+      <div class="payout">
+        <div style="font-size:12px; color:var(--text-2); margin-bottom:4px;">이긴 팀(${m.labels[wi]})에 만원 걸었다면</div>
+        <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;">
+          <span class="big">${(topPay * 10000).toLocaleString()}원</span>
+          <span class="note">가장 많이 주는 <b>${topBook.name}</b> 기준 · 가장 적게 주는 곳보다 <b>${gain.toLocaleString()}원</b> 더 받음</span>
+        </div>
+        <div class="spread" style="margin-top:6px;">사이트별 배당 ${fmtO(lowPay)} ~ ${fmtO(topPay)}</div>
+      </div>`;
+  }
+
+  /* ---------- 5. 사이트별 성적표 ---------- */
+  function renderBookScore() {
+    const H = DATA.history;
+    const rows = BOOKS.map((b, i) => {
+      let hit = 0, marg = 0, bestPay = 0, n = 0;
+      H.forEach((m) => {
+        const od = m.closeBy[b.key];
+        if (!Array.isArray(od)) return;
+        n++;
+        if (favIdx(od) === m.winIdx) hit++;
+        marg += margin(od);
+        const top = Math.max(...booksOf(m).map((x) => m.closeBy[x.key][m.winIdx]));
+        if (od[m.winIdx] >= top - 1e-9) bestPay++;
+      });
+      return { b, i, n, hit: n ? hit / n : 0, marg: n ? marg / n : 0, bestPay: n ? bestPay / n : 0 };
+    });
+    const topHit = Math.max(...rows.map((r) => r.hit));
+    const topPay = Math.max(...rows.map((r) => r.bestPay));
+    $("booktable").innerHTML =
+      `<thead><tr>
+        <th>배팅 사이트</th>
+        <th>유력하다고 본 팀이 실제로 이긴 비율</th>
+        <th>이긴 팀에 가장 높은 배당을 준 비율</th>
+        <th>평균 수수료</th>
+      </tr></thead><tbody>` +
+      rows
+        .filter((r) => r.n)
+        .map(
+          (r) => `<tr class="${r.b.sharp ? "sharp" : ""}">
+        <td><span class="dot" style="background:${SERIES[r.i]}"></span>${r.b.name}${r.b.sharp ? ' <span class="pill quiet">수수료 최저</span>' : ""}</td>
+        <td class="o"><span class="${r.hit >= topHit - 1e-9 ? "best" : ""}">${(r.hit * 100).toFixed(1)}%</span></td>
+        <td class="o"><span class="${r.bestPay >= topPay - 1e-9 ? "best" : ""}">${(r.bestPay * 100).toFixed(1)}%</span></td>
+        <td class="o">${(r.marg * 100).toFixed(1)}%</td>
+      </tr>`
+        )
+        .join("") +
+      `</tbody><tfoot><tr><td colspan="4" style="text-align:left; color:var(--text-2); font-size:11.5px; border-bottom:0; padding-top:10px; white-space:normal; line-height:1.7;">
+        <b>왼쪽</b>은 그 사이트가 "이 팀이 유력하다"(=배당을 제일 낮게 매긴 팀)고 본 게 실제로 맞은 비율 — 예측이 정확한 곳.
+        <b>오른쪽</b>은 이긴 팀에게 5곳 중 가장 높은 배당을 준 비율 — 같은 돈 걸어도 많이 주는 곳. 이 둘은 다른 얘기야.
+      </td></tr></tfoot>`;
+  }
+
+  /* ---------- 6. 처음 vs 최종 ---------- */
+  function renderCLV() {
+    const H = DATA.history;
+    const upset = (key) => H.filter((m) => m[key][m.winIdx] < 0.25).length;
+    const uo = upset("openProb"), uc = upset("closeProb");
+    const cut = Math.round(((uo - uc) / uo) * 100);
+    const better = uc < uo;
+    const steam = H.filter((m) => m.steam);
+    const hit = steam.filter((m) => m.winIdx === m.steamIdx).length;
+    const baseline = steam.reduce((a, m) => a + m.closeProb[m.steamIdx], 0) / (steam.length || 1);
+    $("clvbox").innerHTML = `
+      <div class="grid2">
+        <div>
+          <div style="font-size:12px; color:var(--text-2); margin-bottom:6px;">
+            배당이 <b>"거의 못 이긴다"(25% 미만)</b>고 본 팀이 실제로 이겨버린 경기 (적을수록 잘 맞힌 것)
+          </div>
+          <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;">
+            <span style="font-size:13px; color:var(--text-2)">처음 배당 <b class="num" style="font-size:20px;">${uo}경기</b></span>
+            <span style="color:var(--muted)">→</span>
+            <span style="font-size:13px; color:var(--down)">최종 배당 <b class="num" style="font-size:20px;">${uc}경기</b></span>
+            ${better ? `<span class="pill value">${cut}% 감소</span>` : ""}
+          </div>
+          <p class="note" style="margin:8px 0 0;">경기가 가까워질수록 전 세계 돈이 몰리면서 배당이 다듬어져. 그래서 위의 모든 통계를 <b>최종 배당 기준</b>으로만 뽑았어.</p>
+        </div>
+        <div>
+          <div style="font-size:12px; color:var(--text-2); margin-bottom:6px;">돈이 쏠렸던 쪽이 실제로 이긴 비율</div>
+          <div style="display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;">
+            <span class="num" style="font-size:22px; font-weight:600;">${((hit / steam.length) * 100).toFixed(1)}%</span>
+            <span class="note">배당대로면 ${(baseline * 100).toFixed(1)}%였을 것 · ${steam.length}경기</span>
+          </div>
+          <p class="note" style="margin:8px 0 0;">${IS_DEMO ? "가짜 데이터라 이 숫자는 의미 없어. 진짜 배당을 6개월 이상 모은 뒤에 보면 돈 쏠림을 따라가는 게 통하는지 알 수 있어." : "표본이 적으면 우연일 수 있어. 최소 수백 경기는 쌓여야 판단할 수 있어."}</p>
+        </div>
+      </div>`;
+  }
+
+  /* ---------- 아카이브 초기화 ---------- */
+  function initArchive() {
+    const lgs = [...new Set(DATA.history.map((m) => m.league))].sort();
+    $("lk-league").innerHTML =
+      `<option value="">전체</option>` + lgs.map((l) => `<option>${l}</option>`).join("");
+    $("sm-league").innerHTML =
+      `<option value="">종목/리그 전체</option>` + lgs.map((l) => `<option>${l}</option>`).join("");
+    ["sm-type", "sm-tol", "sm-league", "sm-nodraw"].forEach((id) =>
+      $(id).addEventListener("change", renderSameOdds)
+    );
+    ["sm-h", "sm-d", "sm-a"].forEach((id) => $(id).addEventListener("input", renderSameOdds));
+    /* 첫 화면은 기록이 많은 쪽(승패 vs 승무패)의 가장 흔한 배당 조합으로 */
+    const n2 = DATA.history.filter((m) => m.labels.length === 2).length;
+    const n3 = DATA.history.length - n2;
+    const K0 = n3 > n2 ? 3 : 2;
+    $("sm-type").value = String(K0);
+    SM_PREV_K = K0;
+    $("sm-dwrap").hidden = K0 === 2;
+    applyDefaultPair(K0);
+    renderSameOdds();
+    $("lk-quick").innerHTML = [1.40, 1.77, 2.00, 2.50, 3.20]
+      .map((v) => `<button class="chip" data-v="${v}">${v.toFixed(2)}</button>`)
+      .join("");
+    $("lk-quick")
+      .querySelectorAll(".chip")
+      .forEach((c) =>
+        c.addEventListener("click", () => {
+          $("lk-odds").value = c.dataset.v;
+          renderLookup();
+        })
+      );
+    $("lk-odds").addEventListener("input", renderLookup);
+    $("lk-league").addEventListener("change", () => { renderLookup(); renderBuckets(); });
+    renderLookup();
+    renderBuckets();
+    renderTeams();
+    renderBookScore();
+    renderCLV();
+    renderArchive();
+  }
+
+  /* ---------------- 탭 ---------------- */
+  const TABS = [
+    ["tab-live", "p-live"],
+    ["tab-alert", "p-alert"],
+    ["tab-arch", "p-arch"],
+    ["tab-guide", "p-guide"],
+  ];
+  function switchTab(id) {
+    TABS.forEach(([t, p]) => {
+      const on = t === id;
+      $(t).setAttribute("aria-selected", String(on));
+      $(p).hidden = !on;
+    });
+    try { localStorage.setItem("steam-tab", id); } catch (e) {}
+  }
+  TABS.forEach(([t]) => $(t).addEventListener("click", () => switchTab(t)));
+
+  /* ---------------- 부팅 ---------------- */
+  (function () {
+    const b = $("databadge");
+    if (DATA.demo === false) {
+      b.textContent = "실제 배당 · " + DATA.generatedAt + " 기준";
+      b.style.background = "var(--down-soft)";
+      b.style.color = "var(--down)";
+      b.style.borderColor = "color-mix(in srgb, var(--down) 28%, transparent)";
+    } else {
+      b.textContent = "연습용 가짜 데이터 · " + DATA.generatedAt + " 기준";
+    }
+  })();
+  renderStats();
+  renderList();
+  renderDetail();
+  renderAlerts();
+  initArchive();
+  try {
+    const saved = localStorage.getItem("steam-tab");
+    if (saved && TABS.some(([t]) => t === saved)) switchTab(saved);
+  } catch (e) {}
+})();
+</script>
+
+</body>
+</html>
